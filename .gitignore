@@ -1,0 +1,7 @@
+# 排除备份文件，避免把 jar 的原始备份推上 Pages 仓库
+*.orig
+
+# 通用
+.DS_Store
+Thumbs.db
+*.log

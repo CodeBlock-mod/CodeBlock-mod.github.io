@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeBlock Mod · 在 Minecraft 里写代码</title>
+  <meta name="description" content="CodeBlock Mod —— 一个游戏内可编程红石方块。每个方块绑定一段程序，每游戏刻执行一次，用 cin/cout 读写红石信号（强度 0–15，即十六进制 0–F）。支持 Minecraft 1.21.11 与 26.2。" />
+  <meta name="author" content="zhangky" />
+  <meta name="theme-color" content="#0c0e13" />
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="CodeBlock Mod · 在 Minecraft 里写代码" />
+  <meta property="og:description" content="游戏内可编程红石方块：cin/cout 读写信号，运行时编译 Java / 解释 DSL，定时热重载。支持 1.21.11 与 26.2。" />
+  <meta property="og:image" content="assets/images/code_block.png" />
+  <meta property="og:url" content="https://codeblock-mod.github.io" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" type="image/png" href="assets/images/icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ===== Nav ===== -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a class="brand" href="#top" aria-label="CodeBlock Mod 首页">
+        <img src="assets/images/icon.png" alt="" class="brand__icon" width="34" height="34" />
+        <span class="brand__name">CodeBlock<span class="brand__mod">Mod</span></span>
+      </a>
+      <nav class="nav__links" aria-label="主导航">
+        <a href="#features">特性</a>
+        <a href="#how">玩法</a>
+        <a href="#code">代码示例</a>
+        <a href="#download">下载</a>
+      </nav>
+      <a class="btn btn--ghost nav__cta" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release" rel="noopener">GitHub</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <div class="hero__grid-bg" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <div class="hero__copy">
+          <p class="eyebrow">Minecraft Fabric Mod · 1.21.11 / 26.2</p>
+          <h1 class="hero__title">在 Minecraft 里<span class="hl">写代码</span></h1>
+          <p class="hero__lead">
+            代码方块是一个游戏内可编程红石方块。每个方块绑定一段程序，每游戏刻（tick，20 次/秒）执行一次，
+            把计算结果以红石信号从 6 个面输出，并读取相邻方块朝它发出的信号作为输入。
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="#download">下载最新版</a>
+            <a class="btn btn--ghost" href="#how">怎么玩</a>
+          </div>
+          <ul class="hero__stats">
+            <li><span class="stat__num">0–F</span><span class="stat__label">红石强度</span></li>
+            <li><span class="stat__num">20Hz</span><span class="stat__label">每刻执行</span></li>
+            <li><span class="stat__num">~1s</span><span class="stat__label">自动热重载</span></li>
+            <li><span class="stat__num">2</span><span class="stat__label">MC 版本</span></li>
+          </ul>
+        </div>
+
+        <div class="hero__visual">
+          <div class="terminal" role="img" aria-label="代码方块 DSL 示例：把北面输入从顶面输出">
+            <div class="terminal__bar">
+              <span class="dot dot--r"></span><span class="dot dot--y"></span><span class="dot dot--g"></span>
+              <span class="terminal__file">CB_3f9a1c2d.codescript</span>
+            </div>
+            <pre class="terminal__body"><code id="hero-code"></code><span class="caret" aria-hidden="true"></span></pre>
+          </div>
+          <img src="assets/images/code_block.png" alt="代码方块贴图" class="hero__block" width="160" height="160" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Features (bento) ===== -->
+    <section class="section" id="features">
+      <div class="section__head">
+        <p class="eyebrow">为什么是它</p>
+        <h2 class="section__title">把红石变成一台小电脑</h2>
+        <p class="section__sub">不是命令方块，不是 cumbersome 的函数，而是真正能跑循环、分支与运算的可编程方块。</p>
+      </div>
+
+      <div class="bento">
+        <article class="card card--wide reveal">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="19" cy="14" r="2.4"/></svg>
+          </div>
+          <h3>游戏内可编程红石</h3>
+          <p>每个方块 6 个面都能读 / 写红石信号。写计算逻辑，接红石线，立刻驱动整片电路——加法器、比较器、计数器都能做。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M13 6l-2 12"/></svg>
+          </div>
+          <h3>零依赖 DSL</h3>
+          <p>用 <code>.codescript</code> 写类 C 小语法，记事本就能编辑，不需要编译器。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H7l-3 3z"/></svg>
+          </div>
+          <h3>Java 实时编译</h3>
+          <p>想写完整的类？放一个 <code>.java</code>，游戏内调用 javac 实时编译（需 JDK 启动 MC）。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+          </div>
+          <h3>定时热重载</h3>
+          <p>保存文件后约 1 秒自动检测到变动并重载；右键方块也能强制刷新并查看运行状态。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </div>
+          <h3>双版本支持</h3>
+          <p>同时维护 1.21.11（yarn 映射）与 26.2（开发构建）两条 Fabric 构建线，进游戏都不崩。</p>
+        </article>
+
+        <article class="card card--accent reveal">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 3h-6zM12 22l-3-3h6zM2 12l3-3v6zM22 12l-3 3v-6z"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+          </div>
+          <h3>双标签页归位</h3>
+          <p>创造模式里，代码方块同时出现在「红石」标签页与「管理员 / 命令方块」标签页，和命令方块怼一起。</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===== How it works ===== -->
+    <section class="section" id="how">
+      <div class="section__head">
+        <p class="eyebrow">三步上手</p>
+        <h2 class="section__title">拿方块 → 写程序 → 接红石</h2>
+      </div>
+      <ol class="steps">
+        <li class="step reveal">
+          <span class="step__no">01</span>
+          <h3>拿到方块</h3>
+          <p>创造模式 → 物品栏「红石」标签页（或管理员标签页）→ 找到「代码方块」，放到世界里。</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__no">02</span>
+          <h3>写程序</h3>
+          <p>右键方块，聊天栏显示它的 <code>id</code>（10 位十六进制）。到程序目录新建 <code>CB_&lt;id&gt;.codescript</code> 写逻辑。</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__no">03</span>
+          <h3>接红石</h3>
+          <p>方块 6 面自动发出红石。把红石源接它的输入面、红石线接它的输出面，保存即热重载运行。</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== Code showcase ===== -->
+    <section class="section" id="code">
+      <div class="section__head">
+        <p class="eyebrow">DSL 速览</p>
+        <h2 class="section__title">几行就能跑的代码片段</h2>
+        <p class="section__sub">通道 0=下 1=上 2=北 3=南 4=西 5=东；<code>cin(c)</code> 读、<code>cout(c,v)</code> 写，强度自动限制在 0–15。</p>
+      </div>
+
+      <div class="showcase reveal">
+        <div class="tabs" role="tablist" aria-label="代码示例">
+          <button class="tab is-active" role="tab" aria-selected="true" data-ex="passthrough">信号透传</button>
+          <button class="tab" role="tab" aria-selected="false" data-ex="threshold">阈值比较器</button>
+          <button class="tab" role="tab" aria-selected="false" data-ex="adder">加法器</button>
+          <button class="tab" role="tab" aria-selected="false" data-ex="counter">计数器(反馈)</button>
+        </div>
+        <pre class="showcase__code"><code id="showcase-code"></code></pre>
+        <p class="showcase__note" id="showcase-note"></p>
+      </div>
+    </section>
+
+    <!-- ===== Download (Three.js scroll experience) ===== -->
+    <section class="section download" id="download">
+      <div class="section__head">
+        <p class="eyebrow">下载</p>
+        <h2 class="section__title">挑一个顺手的镜像</h2>
+        <p class="section__sub">滚动鼠标滚轮，方块会逐一切到下一个下载源。四个镜像都包含 1.21.11 与 26.2 两个版本。</p>
+      </div>
+
+      <div class="dl3d" id="dl3d">
+        <div class="dl3d__stage">
+          <canvas class="dl3d__canvas" id="dl-canvas" aria-hidden="true"></canvas>
+          <div class="dl3d__panels" id="dl-panels">
+            <article class="dl-panel is-active" data-i="0">
+              <span class="dl-panel__tag">国外 · 主站</span>
+              <h3>GitHub Releases</h3>
+              <p>开源仓库发布页，永远最新。需要能访问 GitHub。</p>
+              <a class="btn btn--primary" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release/releases/tag/v0.1.0" target="_blank" rel="noopener">前往下载</a>
+            </article>
+            <article class="dl-panel" data-i="1">
+              <span class="dl-panel__tag">国内 · Gitee</span>
+              <h3>Gitee 镜像</h3>
+              <p>国内可访问的镜像仓库发布页（仓库当前为私有，登录后可见）。</p>
+              <a class="btn btn--primary" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/releases" target="_blank" rel="noopener">前往下载</a>
+            </article>
+            <article class="dl-panel" data-i="2">
+              <span class="dl-panel__tag">本站 · 直链 1.21.11</span>
+              <h3>官网直链（1.21.11）</h3>
+              <p>从本项目官网直接下载 1.21.11 版本 jar，无需中转。</p>
+              <a class="btn btn--primary" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-1.21.11.jar" target="_blank" rel="noopener">前往下载</a>
+            </article>
+            <article class="dl-panel" data-i="3">
+              <span class="dl-panel__tag">本站 · 直链 26.2</span>
+              <h3>官网直链（26.2）</h3>
+              <p>从本项目官网直接下载 26.2 版本 jar，无需中转。</p>
+              <a class="btn btn--primary" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-26.2.jar" target="_blank" rel="noopener">前往下载</a>
+            </article>
+          </div>
+          <div class="dl3d__progress" id="dl-progress" aria-hidden="true">
+            <span class="dot is-active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <p class="dl3d__hint" aria-hidden="true">滚动滚轮切换 ↓</p>
+        </div>
+        <div class="dl3d__spacer" aria-hidden="true"></div>
+      </div>
+
+      <div class="callout reveal">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <p><strong>提示：</strong>把 jar 丢进对应实例的 <code>mods/</code> 文件夹即可。用 <code>.java</code> 实时编译需以完整 JDK（非 JRE）启动 MC；不想折腾就直接用 <code>.codescript</code>。</p>
+      </div>
+
+      <div class="companion reveal" style="margin-top: 56px;">
+        <div class="section__head" style="margin-bottom: 26px;">
+          <p class="eyebrow">可选附加模组</p>
+          <h2 class="section__title">ecj 编译环境（给 JRE 用户）</h2>
+          <p class="section__sub">官方启动器默认用 <strong>JRE</strong> 跑 MC，没有 <code>javac</code>，游戏内编译 <code>.java</code> 会失败。装这个独立小 mod（内置 Eclipse JDT&nbsp;Core / ecj 编译器）后，JRE 环境下主模组会自动调用它编译 Java——无需把 MC 改成 JDK 启动，也无需自己预编译 <code>.class</code>。可装可不装。</p>
+        </div>
+        <article class="dl dl--feature" style="max-width: 640px;">
+          <div class="dl__head">
+            <h3>CodeBlock ECJ Compiler</h3>
+            <span class="tag">companion mod</span>
+          </div>
+          <ul class="dl__meta">
+            <li>作用：JRE 环境下提供完整 Java 编译能力</li>
+            <li>依赖：需先装主模组 CodeBlock Mod</li>
+            <li>版本：随主模组支持 1.21.11 / 26.2</li>
+          </ul>
+          <div class="ecj-links">
+            <a class="btn btn--primary" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release/releases/tag/v0.1.0" target="_blank" rel="noopener">GitHub Releases</a>
+            <a class="btn btn--ghost" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/releases" target="_blank" rel="noopener">Gitee 镜像</a>
+            <a class="btn btn--ghost" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-1.21.11.jar" target="_blank" rel="noopener">官网直链 1.21.11</a>
+            <a class="btn btn--ghost" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-26.2.jar" target="_blank" rel="noopener">官网直链 26.2</a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <img src="assets/images/icon.png" alt="" width="28" height="28" />
+        <span>CodeBlock Mod</span>
+      </div>
+      <p class="footer__copy">由 zhangky 用 ❤ 与红石制作 · MIT License</p>
+      <nav class="footer__links" aria-label="页脚链接">
+        <a href="https://github.com/CodeBlock-mod/CodeBlock-mod-release" rel="noopener">GitHub</a>
+        <a href="#download">下载</a>
+        <a href="#how">文档</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="assets/js/vendor/three.min.js"></script>
+  <script src="js/download3d.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
