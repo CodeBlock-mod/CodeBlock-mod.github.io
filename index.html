@@ -228,7 +228,7 @@
 
       <div class="callout reveal">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        <p><strong>提示：</strong>把 jar 丢进对应实例的 <code>mods/</code> 文件夹即可。用 <code>.java</code> 实时编译需以完整 JDK（非 JRE）启动 MC；不想折腾就直接用 <code>.codescript</code>。</p>
+        <p><strong>提示：</strong>把 jar 丢进对应实例的 <code>mods/</code> 文件夹即可。想用 <code>.java</code> 实时编译但不想改 JDK 启动 MC，装下方的 <strong>ECJ 附加模组</strong> 即可（JRE 环境也能编译）；否则直接用 <code>.codescript</code>。</p>
       </div>
 
       <div class="companion reveal" style="margin-top: 56px;">
@@ -247,11 +247,10 @@
             <li>依赖：需先装主模组 CodeBlock Mod</li>
             <li>版本：随主模组支持 1.21.11 / 26.2</li>
           </ul>
+          <p class="ecj-status">⚠️ <strong>jar 待构建</strong>：ECJ 源码已备份到下方两仓，但本机缺 Gradle 9.5.0（MC 1.21.11 的 fabric-loom 1.17.19 强制要求），需在你自己装有 Gradle 9.5.0 + JDK 21 的机器按 <code>发布方法.md</code> §10 构建后再发布下载。</p>
           <div class="ecj-links">
-            <a class="btn btn--primary" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release/releases/tag/v0.1.0" target="_blank" rel="noopener">GitHub Releases</a>
-            <a class="btn btn--ghost" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/tree/master/downloads" target="_blank" rel="noopener">Gitee 镜像</a>
-            <a class="btn btn--ghost" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-1.21.11.jar" target="_blank" rel="noopener">官网直链 1.21.11</a>
-            <a class="btn btn--ghost" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-26.2.jar" target="_blank" rel="noopener">官网直链 26.2</a>
+            <a class="btn btn--primary" href="https://github.com/CodeBlock-mod/CodeBlock-mod-ecj" target="_blank" rel="noopener">GitHub 源码</a>
+            <a class="btn btn--ghost" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-ecj" target="_blank" rel="noopener">Gitee 源码</a>
           </div>
         </article>
       </div>
