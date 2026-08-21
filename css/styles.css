@@ -540,3 +540,52 @@ code { font-family: var(--font-mono); }
 @media (prefers-reduced-motion: reduce) {
   .dl3d.is-3d .dl-panel { transition: opacity 0.3s linear; transform: none; }
 }
+
+/* ===== 版本徽标 & 历史版本 ===== */
+.version-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(110, 168, 255, 0.14);
+  color: #9cc0ff;
+  border: 1px solid rgba(110, 168, 255, 0.3);
+  vertical-align: middle;
+}
+.history__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: var(--muted);
+}
+.version-select {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 0.95rem;
+  min-width: 220px;
+}
+.version-select:focus { outline: none; border-color: var(--accent); }
+.version-files__head {
+  color: var(--muted);
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+}
+.version-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  margin-bottom: 10px;
+}
+.version-file span { font-weight: 600; color: var(--text); }

@@ -5,3 +5,6 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Cloudflare Pages 本地构建缓存
+.wrangler/

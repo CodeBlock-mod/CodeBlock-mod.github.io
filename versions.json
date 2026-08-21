@@ -1,0 +1,33 @@
+{
+  "current": "v1",
+  "updated": "2026-08-21",
+  "gitee": "https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/tree/master/downloads",
+  "versions": [
+    {
+      "id": "v1",
+      "name": "v0.1.0 · Blockly 版",
+      "date": "2026-08-21",
+      "note": "26.2：用户脚本改到后台守护线程执行（死循环/超长 sleep 不再卡死服务端主线程，超时看门狗自动终止并标记错误）；自定义过程（积木）编译通过；东/西贴图方向修正。需配合 MCEF Modern。",
+      "files": [
+        {
+          "label": "1.21.11",
+          "tag": "官网直链 · 1.21.11",
+          "path": "assets/downloads/v1/codeblock-mod-1.21.11.jar",
+          "desc": "混淆版 / Yarn 映射，含 ECJ 兜底 + 游戏内 Blockly 编辑器（需装 MCEF Modern）。丢进 1.21.11 实例的 mods/ 即可。"
+        },
+        {
+          "label": "26.2",
+          "tag": "官网直链 · 26.2",
+          "path": "assets/downloads/v1/codeblock-mod-26.2.jar",
+          "desc": "Mojang 未混淆版，含 ECJ 兜底 + 游戏内 Blockly 编辑器（需装 MCEF Modern）。丢进 26.2 实例的 mods/ 即可。脚本在后台线程执行，防卡服。"
+        },
+        {
+          "label": "ECJ 附加模组",
+          "tag": "官网直链 · ECJ",
+          "path": "assets/downloads/v1/codeblock-ecj-0.1.0.jar",
+          "desc": "给用 JRE 启动 MC 的玩家，无需 JDK 即可在游戏内编译 .java。丢进 mods/ 即可。"
+        }
+      ]
+    }
+  ]
+}

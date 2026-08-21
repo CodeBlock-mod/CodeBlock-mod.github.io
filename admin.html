@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeBlock Mod · 版本管理后台</title>
+  <style>
+    :root { --bg:#0c0e13; --card:#14171f; --line:#262b36; --txt:#e7eaf0; --mut:#8b93a7; --pri:#5b9dff; --ok:#3ecf8e; --err:#ff6b6b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: "Outfit", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background:var(--bg); color:var(--txt); line-height:1.6; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .sub { color: var(--mut); font-size: 13px; margin: 0 0 22px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:18px; }
+    label { display:block; font-size:13px; color:var(--mut); margin-bottom:6px; }
+    input[type=password], textarea { width:100%; background:#0e1118; border:1px solid var(--line); color:var(--txt); border-radius:10px; padding:10px 12px; font-size:13px; font-family:"JetBrains Mono", ui-monospace, monospace; }
+    textarea { min-height: 360px; resize: vertical; line-height:1.5; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    button { cursor:pointer; border:none; border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; background:var(--pri); color:#04122e; }
+    button.ghost { background:transparent; border:1px solid var(--line); color:var(--txt); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .status { font-size:13px; margin-top:12px; min-height:18px; }
+    .status.ok { color:var(--ok); }
+    .status.err { color:var(--err); }
+    .status.mut { color:var(--mut); }
+    .hidden { display:none; }
+    code { background:#0e1118; padding:1px 6px; border-radius:6px; font-size:12px; }
+    .tip { font-size:12px; color:var(--mut); margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>版本管理后台</h1>
+    <p class="sub">编辑 <code>versions.json</code> 并即时写回 Gitee 发布仓库，下载页无需重新部署即刷新。</p>
+
+    <!-- 登录 -->
+    <div class="card" id="login">
+      <label for="token">管理口令</label>
+      <input type="password" id="token" placeholder="输入后台口令" autocomplete="off" />
+      <div class="row" style="margin-top:12px;">
+        <button id="login-btn">进入</button>
+      </div>
+      <p class="tip">口令由部署时设置的 <code>ADMIN_TOKEN</code> 决定，保存在浏览器 sessionStorage，关闭标签页即失效。</p>
+      <div class="status mut" id="login-status"></div>
+    </div>
+
+    <!-- 编辑区 -->
+    <div id="editor" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <strong>版本清单（JSON）</strong>
+          <span class="tip" id="saved-at"></span>
+        </div>
+        <label for="json" style="margin-top:10px;">直接编辑，或点“添加版本”插入模板：</label>
+        <textarea id="json" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:14px;">
+          <button id="add-btn" class="ghost">+ 添加版本</button>
+          <button id="reload-btn" class="ghost">重新载入</button>
+          <button id="save-btn">保存并写回 Gitee</button>
+        </div>
+        <div class="status mut" id="status">就绪</div>
+        <p class="tip">结构：<code>{ current, updated, gitee, versions:[ { id, name, date, note, files:[ {label, tag, path, desc} ] } ] }</code>。<code>path</code> 可填 Gitee 直链或官网相对路径（jar 仍建议走 Gitee 链接）。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var API = "/api/versions";
+    var token = sessionStorage.getItem("cb_admin_token") || "";
+
+    var loginEl = document.getElementById("login");
+    var editorEl = document.getElementById("editor");
+    var tokenInput = document.getElementById("token");
+    var loginBtn = document.getElementById("login-btn");
+    var loginStatus = document.getElementById("login-status");
+    var jsonEl = document.getElementById("json");
+    var statusEl = document.getElementById("status");
+    var savedAt = document.getElementById("saved-at");
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg;
+      statusEl.className = "status " + (kind || "mut");
+    }
+
+    // 已登录则直接进入
+    if (token) { enter(); }
+
+    loginBtn.addEventListener("click", function () {
+      var v = tokenInput.value.trim();
+      if (!v) { loginStatus.textContent = "请输入口令"; loginStatus.className = "status err"; return; }
+      token = v;
+      sessionStorage.setItem("cb_admin_token", token);
+      enter();
+    });
+
+    function enter() {
+      loginEl.classList.add("hidden");
+      editorEl.classList.remove("hidden");
+      reload();
+    }
+
+    function reload() {
+      setStatus("正在载入…");
+      fetch(API, { cache: "no-cache" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          jsonEl.value = JSON.stringify(d, null, 2);
+          setStatus("已载入当前版本清单");
+        })
+        .catch(function (e) {
+          setStatus("载入失败：" + e.message, "err");
+        });
+    }
+
+    document.getElementById("reload-btn").addEventListener("click", reload);
+
+    document.getElementById("add-btn").addEventListener("click", function () {
+      var data;
+      try { data = JSON.parse(jsonEl.value); } catch (e) { setStatus("当前内容不是合法 JSON，先修正再添加", "err"); return; }
+      if (!Array.isArray(data.versions)) data.versions = [];
+      var n = data.versions.length + 1;
+      var today = new Date().toISOString().slice(0, 10);
+      data.versions.push({
+        id: "v" + n,
+        name: "vX.Y.Z · 说明",
+        date: today,
+        note: "新版本说明",
+        files: [
+          { label: "1.21.11", tag: "官网直链 · 1.21.11", path: "assets/downloads/v" + n + "/codeblock-mod-1.21.11.jar", desc: "丢进 1.21.11 实例的 mods/。" },
+          { label: "26.2", tag: "官网直链 · 26.2", path: "assets/downloads/v" + n + "/codeblock-mod-26.2.jar", desc: "丢进 26.2 实例的 mods/。" }
+        ]
+      });
+      data.current = "v" + n;
+      data.updated = today;
+      jsonEl.value = JSON.stringify(data, null, 2);
+      setStatus("已插入 v" + n + " 模板，改完点保存");
+    });
+
+    document.getElementById("save-btn").addEventListener("click", function () {
+      var data;
+      try { data = JSON.parse(jsonEl.value); } catch (e) { setStatus("JSON 格式错误，保存中止：" + e.message, "err"); return; }
+      setStatus("正在写回 Gitee…");
+      fetch(API, {
+        method: "POST",
+        headers: { "content-type": "application/json", "authorization": "Bearer " + token },
+        body: JSON.stringify(data)
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (res.ok && res.j.ok) {
+            savedAt.textContent = "最后保存：" + new Date().toLocaleString();
+            setStatus("✅ 已保存并写回 Gitee，下载页稍后自动刷新", "ok");
+          } else {
+            setStatus("❌ 保存失败：" + (res.j.error || "unknown") + (res.j.detail ? " · " + res.j.detail : ""), "err");
+          }
+        })
+        .catch(function (e) { setStatus("❌ 网络错误：" + e.message, "err"); });
+    });
+  </script>
+</body>
+</html>

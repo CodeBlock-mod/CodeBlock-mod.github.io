@@ -13,7 +13,7 @@
   <meta property="og:title" content="CodeBlock Mod · 在 Minecraft 里写代码" />
   <meta property="og:description" content="游戏内可编程红石方块：cin/cout 读写信号，运行时编译 Java / 解释 DSL，定时热重载。支持 1.21.11 与 26.2。" />
   <meta property="og:image" content="assets/images/code_block.png" />
-  <meta property="og:url" content="https://codeblock-mod.github.io" />
+  <meta property="og:url" content="https://codeblock.cc.cd" />
   <meta name="twitter:card" content="summary_large_image" />
 
   <link rel="icon" type="image/png" href="assets/images/icon.png" />
@@ -36,7 +36,7 @@
         <a href="#code">代码示例</a>
         <a href="#download">下载</a>
       </nav>
-      <a class="btn btn--ghost nav__cta" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release" rel="noopener">GitHub</a>
+      <a class="btn btn--ghost nav__cta" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release" target="_blank" rel="noopener">Gitee</a>
     </div>
   </header>
 
@@ -185,42 +185,15 @@
     <section class="section download" id="download">
       <div class="section__head">
         <p class="eyebrow">下载</p>
-        <h2 class="section__title">挑一个顺手的镜像</h2>
-        <p class="section__sub">滚动鼠标滚轮，方块会逐一切到下一个下载源。四个镜像都包含 1.21.11 与 26.2 两个版本。</p>
+        <h2 class="section__title">挑一个顺手的镜像 <span id="current-version" class="version-badge"></span></h2>
+        <p class="section__sub">滚动鼠标滚轮，方块会逐一切到下一个下载源。主源为 Gitee 镜像，官网同时自托管 1.21.11 / 26.2 两个版本与 ECJ 附加模组。下载源由版本清单自动生成，无需改页面。</p>
       </div>
 
       <div class="dl3d" id="dl3d">
         <div class="dl3d__stage">
           <canvas class="dl3d__canvas" id="dl-canvas" aria-hidden="true"></canvas>
-          <div class="dl3d__panels" id="dl-panels">
-            <article class="dl-panel is-active" data-i="0">
-              <span class="dl-panel__tag">国外 · 主站</span>
-              <h3>GitHub Releases</h3>
-              <p>开源仓库发布页，永远最新。需要能访问 GitHub。</p>
-              <a class="btn btn--primary" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release/releases" target="_blank" rel="noopener">前往下载</a>
-            </article>
-            <article class="dl-panel" data-i="1">
-              <span class="dl-panel__tag">国内 · Gitee</span>
-              <h3>Gitee 镜像</h3>
-              <p>国内可访问的镜像仓库，编译好的 jar 已放在 downloads/ 目录，现已公开可直接下载。</p>
-              <a class="btn btn--primary" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/tree/master/downloads" target="_blank" rel="noopener">前往仓库下载</a>
-            </article>
-            <article class="dl-panel" data-i="2">
-              <span class="dl-panel__tag">本站 · 直链 1.21.11</span>
-              <h3>官网直链（1.21.11）</h3>
-              <p>✅ 已发布 v0.1.0（混淆版 / Yarn 映射，含 ECJ 兜底）：从本项目官网直接下载 1.21.11 版本 jar，无需中转。</p>
-              <a class="btn btn--primary" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-1.21.11.jar" target="_blank" rel="noopener">前往下载</a>
-            </article>
-            <article class="dl-panel" data-i="3">
-              <span class="dl-panel__tag">本站 · 直链 26.2</span>
-              <h3>官网直链（26.2）</h3>
-              <p>✅ 已发布 v0.1.0（Mojang 未混淆版，含 ECJ 兜底）：从本项目官网直接下载 26.2 版本 jar，无需中转。</p>
-              <a class="btn btn--primary" href="https://codeblock-mod.github.io/assets/downloads/codeblock-mod-26.2.jar" target="_blank" rel="noopener">前往下载</a>
-            </article>
-          </div>
-          <div class="dl3d__progress" id="dl-progress" aria-hidden="true">
-            <span class="dot is-active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          </div>
+          <div class="dl3d__panels" id="dl-panels"><!-- 由 versions.json 动态渲染 --></div>
+          <div class="dl3d__progress" id="dl-progress" aria-hidden="true"><!-- 由 versions.json 动态渲染 --></div>
           <p class="dl3d__hint" aria-hidden="true">滚动滚轮切换 ↓</p>
         </div>
         <div class="dl3d__spacer" aria-hidden="true"></div>
@@ -249,11 +222,23 @@
           </ul>
           <p class="ecj-status ecj-status--ok">✅ <strong>已发布 v0.1.0</strong>：jar 已构建并上传，JRE 用户把它丢进 <code>mods/</code> 即可在游戏内编译 Java，无需安装完整 JDK。</p>
           <div class="ecj-links">
-            <a class="btn btn--primary" href="https://github.com/CodeBlock-mod/CodeBlock-mod-release/releases/tag/ecj-v0.1.0" target="_blank" rel="noopener">GitHub Releases</a>
-            <a class="btn btn--ghost" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/tree/master/downloads" target="_blank" rel="noopener">Gitee 镜像</a>
-            <a class="btn btn--ghost" href="https://codeblock-mod.github.io/assets/downloads/codeblock-ecj-0.1.0.jar" target="_blank" rel="noopener">官网直链</a>
+            <a id="ecj-direct" class="btn btn--primary" href="assets/downloads/v1/codeblock-ecj-0.1.0.jar" target="_blank" rel="noopener">官网直链</a>
+            <a id="ecj-gitee" class="btn btn--ghost" href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release/tree/master/downloads" target="_blank" rel="noopener">Gitee 镜像</a>
           </div>
         </article>
+      </div>
+
+      <div class="history reveal" style="margin-top: 56px;">
+        <div class="section__head" style="margin-bottom: 20px;">
+          <p class="eyebrow">历史版本</p>
+          <h2 class="section__title">回退到旧版</h2>
+          <p class="section__sub">新版若有问题（比如出了 bug），可在这里切回之前的版本。当前为 v1，后续版本会依次追加，旧版 jar 会一直保留。</p>
+        </div>
+        <div class="history__bar">
+          <label for="version-select">选择版本：</label>
+          <select id="version-select" class="version-select"></select>
+        </div>
+        <div id="version-files" class="version-files"></div>
       </div>
     </section>
   </main>
@@ -267,9 +252,10 @@
       </div>
       <p class="footer__copy">由 zhangky 用 ❤ 与红石制作 · MIT License</p>
       <nav class="footer__links" aria-label="页脚链接">
-        <a href="https://github.com/CodeBlock-mod/CodeBlock-mod-release" rel="noopener">GitHub</a>
+        <a href="https://gitee.com/immediate-success-upon-arrival/CodeBlock-mod-release" rel="noopener">Gitee</a>
         <a href="#download">下载</a>
         <a href="#how">文档</a>
+        <a href="/admin.html">管理后台</a>
       </nav>
     </div>
   </footer>
