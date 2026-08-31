@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>CodeBlock Mod · 接口文档（API）</title>
+  <meta name="description" content="代码方块（CodeBlock Mod）编程接口文档：红石 cin/cout、状态存储、等待、聊天与音效、自定义音频、文件命名、运行模型与线程安全。" />
+  <meta name="viewport" content="width=device-width">
+  <meta name="author" content="zhangky" />
+
+  <!-- 模板样式（solido OnePage 主题） -->
+  <link rel="stylesheet" href="docs-assets/css/normalize.css">
+  <link rel="stylesheet" href="docs-assets/css/main.css">
+  <link rel="stylesheet" href="docs-assets/css/solido.css">
+  <link rel="stylesheet" href="docs-assets/css/responsive.css">
+  <link rel="stylesheet" href="docs-assets/css/color/blue.css">
+
+  <!-- 文档页专用补充样式 -->
+  <style>
+    body { -webkit-font-smoothing: antialiased; }
+    .doc-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+    header.header { position: fixed; top: 0; left: 0; right: 0; z-index: 60; }
+    body { padding-top: 74px; }
+
+    .tag { display:inline-block; font-size:11px; line-height:1; padding:4px 8px; border-radius:3px; vertical-align:middle; margin-left:6px; font-weight:700; }
+    .tag--ok   { background:#2e9e5b; color:#fff; }
+    .tag--plan { background:#8a8f98; color:#fff; }
+    .tag--chg  { background:#c9802a; color:#fff; }
+
+    h3.api-h { margin: 26px 0 10px; font-size: 17px; }
+    h3.api-h:first-child { margin-top: 10px; }
+    p.doc-p { line-height: 1.85; margin: 0 0 12px; }
+    ul.doc-ul { line-height: 1.9; margin: 0 0 14px 20px; padding: 0; }
+    ul.doc-ul li { margin-bottom: 4px; }
+
+    .api-table { width:100%; border-collapse:collapse; margin: 12px 0 18px; font-size:13.5px; }
+    .api-table th, .api-table td { border:1px solid #d9dde3; padding:8px 10px; text-align:left; vertical-align:top; }
+    .api-table th { background:#eef1f5; font-weight:700; }
+    .api-table td code { white-space: nowrap; }
+
+    pre.code { background:#0f1218; color:#e6e6e6; border-radius:6px; padding:14px 16px; overflow:auto; font-size:13px; line-height:1.65; margin: 0 0 16px; }
+    pre.code code { font-family: Consolas, "Courier New", monospace; white-space: pre; }
+    code.inl { background:#eef1f5; border-radius:3px; padding:1px 5px; font-family: Consolas, "Courier New", monospace; font-size: 13px; }
+
+    .note { border-left:4px solid #3d8bd6; background:#f4f8fd; padding:10px 14px; margin:0 0 16px; line-height:1.8; }
+    .note--warn { border-left-color:#d9534f; background:#fdf4f4; }
+    .note--ok { border-left-color:#3a8f5a; background:#f4fcf6; }
+    .note strong { color:#222; }
+    article.content { padding-bottom: 46px; }
+    .k { color:#7fb3ff; }
+    .s { color:#c3e88d; }
+    .c { color:#7c8797; font-style:italic; }
+    .f { color:#ffcb6b; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo"><span><span></span></span>CodeBlock</div>
+    <nav class="menu">
+      <ul id="nav">
+        <li class="current"><a href="#sec-overview">概述</a></li>
+        <li><a href="#sec-model">运行模型</a></li>
+        <li><a href="#sec-redstone">红石 I/O</a></li>
+        <li><a href="#sec-state">状态与等待</a></li>
+        <li><a href="#sec-msg">消息与音效</a></li>
+        <li><a href="#sec-audio">自定义音频</a></li>
+        <li><a href="#sec-files">文件与命名</a></li>
+        <li><a href="index.html">← 回官网</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ============ 概述 ============ -->
+  <article id="sec-overview" class="content menu-top">
+    <div class="doc-wrap">
+      <header class="title one">接口文档（API）</header>
+      <div class="spacer"></div>
+      
+
+      <p class="doc-p">
+        代码方块把你写的 Java 程序当作一个「每 tick 跑一次的小芯片」。程序实现
+        <code class="inl">CodeBlockProgram</code> 接口的 <code class="inl">onTick(CodeContext ctx, long tick)</code>，
+        模组在合适时机调用它，并传入 <code class="inl">ctx</code>——所有跟 MC 世界打交道的能力都挂在这个上下文对象上。
+      </p>
+
+      <h3 class="api-h">最小可运行程序</h3>
+      <pre class="code"><code><span class="k">import</span> codeblockmod.api.CodeBlockProgram;
+<span class="k">import</span> codeblockmod.api.CodeContext;
+
+<span class="c">// 文件名必须与类名一致：CB_block1.java</span>
+<span class="k">public class</span> <span class="f">CB_block1</span> <span class="k">implements</span> CodeBlockProgram {
+    <span class="k">public void</span> <span class="f">onTick</span>(CodeContext ctx, <span class="k">long</span> tick) {
+        <span class="k">int</span> v = ctx.<span class="f">readInput</span>(<span class="s">4</span>);      <span class="c">// 读西面(4)的红石强度</span>
+        ctx.<span class="f">writeOutput</span>(<span class="s">5</span>, v);       <span class="c">// 原样写到东面(5)</span>
+    }
+}</code></pre>
+
+      <div class="note">
+        <strong>约束：</strong>文件名、类名、方块名字三者必须一致。方块名为 <code class="inl">block1</code> 时，
+        Java 文件就是 <code class="inl">CB_block1.java</code>，类名必须是 <code class="inl">CB_block1</code>。
+        这是 Java「public 类名 = 文件名」的硬要求，不是模组的限制。
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ 运行模型 ============ -->
+  <article id="sec-model" class="content menu-top dark">
+    <div class="doc-wrap">
+      <header class="title one">运行模型与线程安全</header>
+      <div class="spacer"></div>
+      <div class="title two">什么时候跑？在哪条线程跑？能写死循环吗？</div>
+
+      <h3 class="api-h">只有两种时机会跑程序</h3>
+      <ul class="doc-ul">
+        <li><strong>① 手动运行</strong>：首次载入方块、准星对着方块按 <code class="inl">O</code>、右键方块重载。</li>
+        <li><strong>② 检测到更改运行</strong>：程序文件 mtime 变化（每 20 tick 扫一次），或邻居红石变化（去抖 4 tick 后跑一次）。</li>
+      </ul>
+      <div class="note note--warn">
+        <strong>模组绝不会每 tick 偷偷轮询跑你的程序。</strong>
+        没写循环 = 一次事件跑一次；写了 <code class="inl">while (true)</code> 就由你自己的代码一直循环。
+      </div>
+
+      <h3 class="api-h">线程模型</h3>
+      <p class="doc-p">
+        你的 <code class="inl">onTick</code> 跑在<strong>后台守护线程</strong>里，不阻塞服务端主线程。
+        <code class="inl">ctx</code> 里凡是触碰世界的操作（读红石、写输出、发消息、放音）都会自动经
+        <code class="inl">runOnMain()</code> 调度回服务端主线程执行，所以你<strong>不需要自己加锁或调度</strong>，
+        直接在 <code class="inl">onTick</code> 里调用即可。
+      </p>
+
+      <h3 class="api-h">速度上限（MC 引擎天花板）</h3>
+      <p class="doc-p">
+        服务端 20 TPS，<strong>1 tick = 50ms 就是最快速度</strong>。红石灯/红石线最快约 20Hz，
+        「隔 1ms 闪一次」物理上做不到。<code class="inl">sleepTicks(1)</code> 已经是最短等待。
+      </p>
+
+      <h3 class="api-h">看门狗</h3>
+      <p class="doc-p">
+        按设计，<strong>任何循环都永不自动终止</strong>。只有当程序连续 10 秒<strong>从未让出 CPU</strong>
+        （循环体内缺少「等待」的纯空转）时，才会在日志里打一条 WARN 提示——不会中断线程、不会清输出。
+        自己用 <code class="inl">sleepTicks()</code> / <code class="inl">sleep()</code> 让出 CPU 即可规避占满单核。
+      </p>
+    </div>
+  </article>
+
+  <!-- ============ 红石 I/O ============ -->
+  <article id="sec-redstone" class="content menu-top">
+    <div class="doc-wrap">
+      <header class="title one">红石 I/O（cin / cout）</header>
+      <div class="spacer"></div>
+      <div class="title two">强度 0–15，即十六进制 0–F</div>
+
+      <h3 class="api-h">通道编号（= 方块六个面）</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:90px">通道</th><th style="width:120px">方向</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>0</code></td><td>下 DOWN</td><td>方块底面</td></tr>
+          <tr><td><code>1</code></td><td>上 UP</td><td>方块顶面</td></tr>
+          <tr><td><code>2</code></td><td>北 NORTH</td><td>—Z 方向</td></tr>
+          <tr><td><code>3</code></td><td>南 SOUTH</td><td>+Z 方向</td></tr>
+          <tr><td><code>4</code></td><td>西 WEST</td><td>—X 方向</td></tr>
+          <tr><td><code>5</code></td><td>东 EAST</td><td>+X 方向</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">接口一览</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>int readInput(int channel)</code></td><td>读某面<strong>外部</strong>输入的红石强度（0–15）。已排除本方块自身在该面发出的信号，避免自激。</td></tr>
+          <tr><td><code>void writeOutput(int channel, int value)</code></td><td>向某面输出强度，自动 clamp 到 0–15。</td></tr>
+          <tr><td><code>int readInputMax()</code></td><td>返回 6 个面中<strong>最大</strong>的输入强度。</td></tr>
+          <tr><td><code>void writeOutputAll(int value)</code></td><td>6 个面同时输出相同强度（自动 clamp）。</td></tr>
+          <tr><td><code>String debugInputs()</code></td><td>返回 6 个方向当前输入的可读字符串。接线不确定时用它确认拉杆/压力板到底接在哪一面。<span class="tag tag--ok">已实现</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        <strong>接线铁律：输入端与输出端物理分离。</strong>
+        例如「读西面、写东面」。若把输出和读取接到<strong>同一段红石粉</strong>，自己的信号会反馈回来被自己读到（物理自激），
+        表现就是 0/1 反复跳。<code class="inl">readInput</code> 只排除本方块自身发射量，排除不了同一段红石线的反射。
+      </div>
+
+      <h3 class="api-h">例：阈值比较器</h3>
+      <pre class="code"><code><span class="k">public void</span> <span class="f">onTick</span>(CodeContext ctx, <span class="k">long</span> tick) {
+    <span class="k">int</span> v = ctx.<span class="f">readInput</span>(<span class="s">4</span>);              <span class="c">// 读西面</span>
+    ctx.<span class="f">writeOutput</span>(<span class="s">5</span>, v &gt;= <span class="s">8</span> ? <span class="s">15</span> : <span class="s">0</span>);   <span class="c">// 东面：够强就满输出</span>
+}</code></pre>
+    </div>
+  </article>
+
+  <!-- ============ 状态与等待 ============ -->
+  <article id="sec-state" class="content menu-top dark">
+    <div class="doc-wrap">
+      <header class="title one">跨 tick 状态与等待</header>
+      <div class="spacer"></div>
+      <div class="title two">计数器、计时器、延时</div>
+
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>int getStateInt(String key)</code></td><td>读取跨 tick 持久化的整数状态（计数器/计时器/标志位）。key 不存在返回 0。</td></tr>
+          <tr><td><code>void setState(String key, int value)</code></td><td>写入整数状态。每个代码方块有<strong>自己独立</strong>的状态表。</td></tr>
+          <tr><td><code>void sleepTicks(long n)</code></td><td>真阻塞 n 个游戏 tick（1 tick ≈ 50ms），期间让出 CPU。用于延时/降频。</td></tr>
+          <tr><td><code>void sleep(long millis)</code></td><td>真阻塞指定毫秒。在 <code>while(true)</code> 里用它让出 CPU 降频。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">例：每 20 tick 计一次数</h3>
+      <pre class="code"><code><span class="k">public void</span> <span class="f">onTick</span>(CodeContext ctx, <span class="k">long</span> tick) {
+    <span class="k">int</span> n = ctx.<span class="f">getStateInt</span>(<span class="s">"count"</span>);
+    ctx.<span class="f">setState</span>(<span class="s">"count"</span>, n + <span class="s">1</span>);
+    ctx.<span class="f">writeOutput</span>(<span class="s">5</span>, n % <span class="s">16</span>);   <span class="c">// 0–F 循环输出</span>
+    ctx.<span class="f">sleepTicks</span>(<span class="s">20</span>);              <span class="c">// 约 1 秒一次，同时让出 CPU</span>
+}</code></pre>
+      <div class="note note--warn">
+        <strong>死循环务必带等待。</strong><code class="inl">while(true)</code> 里如果没有
+        <code class="inl">sleepTicks()</code> 或 <code class="inl">sleep()</code>，会纯空转占满一个 CPU 核心（看门狗只会打日志，不会帮你停）。
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ 消息与音效 ============ -->
+  <article id="sec-msg" class="content menu-top">
+    <div class="doc-wrap">
+      <header class="title one">消息、音效与屏幕提示</header>
+      <div class="spacer"></div>
+      <div class="title two">跟玩家沟通</div>
+
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>void sendMessage(String text)</code></td><td>聊天框发一条消息，<strong>方圆 64 格</strong>内玩家可见。支持 <code>§</code> 颜色码。同文本 1 秒内去重。</td></tr>
+          <tr><td><code>void sendClickable(String text, String url)</code></td><td>可点击消息（悬停下划线）。以 <code>http</code> 开头＝打开链接，否则当作 MC 命令执行。3 秒去重。</td></tr>
+          <tr><td><code>void playSound(String soundId)</code></td><td>播放原版音效，<strong>方圆 16 格</strong>可听到。例：<code>block.note_block.harp</code>、<code>entity.player.levelup</code>。ID 无效时回退竖琴音。</td></tr>
+          <tr><td><code>void sendActionBar(String text)</code></td><td>物品栏上方短暂文字（Action Bar），约 3 秒消失。</td></tr>
+          <tr><td><code>void sendTitle(String text)</code></td><td>屏幕中央大标题。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">例：可点击链接</h3>
+      <pre class="code"><code>ctx.<span class="f">sendClickable</span>(<span class="s">"§b点我打开文档"</span>, <span class="s">"https://codeblock.cc.cd/docs.html"</span>);
+ctx.<span class="f">sendClickable</span>(<span class="s">"§a点我回到出生点"</span>, <span class="s">"/spawn"</span>);</code></pre>
+    </div>
+  </article>
+
+  <!-- ============ 自定义音频 ============ -->
+  <article id="sec-audio" class="content menu-top dark">
+    <div class="doc-wrap">
+      <header class="title one">自定义音频</header>
+      <div class="spacer"></div>
+      <div class="title two">播放你自己的 mp3 / wav / ogg</div>
+
+      <p class="doc-p">
+        音频文件放在存档目录的 <code class="inl">res/media/</code> 下，用文件名直接播放（流式 SourceDataLine，mp3 已内置解码）。
+      </p>
+
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>void playAudio(String filename, float volume)</code></td><td>播放 <code>res/media/</code> 下的音频。<strong>调一次播一次</strong>，次数完全由你的代码决定。音量 <code>&gt;1</code> 视为百分比（100=满音量），否则按 0.0–1.0。</td></tr>
+          <tr><td><code>void stopAudio()</code></td><td>停止该方块正在播放的<strong>所有</strong>自定义音频。</td></tr>
+          <tr><td><code>void stopAudio(String filename)</code></td><td>停止指定文件名的音频。</td></tr>
+        </tbody>
+      </table>
+
+      <pre class="code"><code>ctx.<span class="f">playAudio</span>(<span class="s">"ding.mp3"</span>, <span class="s">80</span>);   <span class="c">// 80% 音量</span>
+<span class="c">// ...</span>
+ctx.<span class="f">stopAudio</span>(<span class="s">"ding.mp3"</span>);        <span class="c">// 只停这一首</span></code></pre>
+
+      <div class="note">
+        并发上限为每方块 <strong>8</strong> 条音频线路（防止资源耗尽），超出的播放请求会被丢弃。文件不存在时会回退一声竖琴提示音。
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ 文件与命名 ============ -->
+  <article id="sec-files" class="content menu-top">
+    <div class="doc-wrap">
+      <header class="title one">文件、目录与命名</header>
+      <div class="spacer"></div>
+      <div class="title two">程序存在哪、叫什么、怎么改名</div>
+
+      <table class="api-table">
+        <thead><tr><th style="width:34%">路径 / 文件</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>&lt;存档&gt;/res/program/</code></td><td>程序目录（随存档走）</td></tr>
+          <tr><td><code>CB_&lt;名字&gt;.java</code></td><td>Java 源码（游戏内 javac 实时编译；JRE 用户需装 ECJ 附加模组）</td></tr>
+          <tr><td><code>CB_&lt;名字&gt;.class</code></td><td>编译产物。存在且不旧于源码时<strong>直接加载、跳过编译</strong>（编译缓存）</td></tr>
+          <tr><td><code>CB_&lt;名字&gt;.codescript</code></td><td>零依赖 DSL 脚本（记事本即可写，无需编译器）</td></tr>
+          <tr><td><code>CB_&lt;名字&gt;.blocks</code></td><td>Blockly 图形积木 XML，供图形编辑器还原</td></tr>
+          <tr><td><code>&lt;存档&gt;/res/media/</code></td><td>音频文件（<code>playAudio</code> 从这里取）</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">命名规则<span class="tag tag--ok">已实现</span></h3>
+      <ul class="doc-ul">
+        <li>方块名 <code class="inl">block1</code> → 代码文件固定为 <code class="inl">CB_block1.java</code>，<strong>名字与代码绑定</strong>。</li>
+        <li>名字只允许<strong>字母 / 数字 / 下划线 / 中文</strong>；禁止为空、禁止与别的方块重名。</li>
+        <li>改名会同步重命名整套 <code class="inl">CB_&lt;旧名&gt;.*</code> 文件，并自动改写 <code class="inl">.java</code> 里的类名、删除陈旧 <code class="inl">.class</code>（下次编译重建）。</li>
+      </ul>
+      <div class="note note--ok">
+        <strong>改名界面已改为游戏内</strong>（右 Shift + 右键代码方块，弹出游戏内 Screen，支持中文输入法），
+        不再使用浏览器弹窗。
+      </div>
+
+      <h3 class="api-h">编辑器里的快捷操作<span class="tag tag--ok">已实现</span></h3>
+      <ul class="doc-ul">
+        <li><strong>📄 用默认应用打开 Java 代码</strong>：用系统默认程序打开当前方块的 <code class="inl">CB_&lt;名字&gt;.java</code>。</li>
+        <li><strong>📂 打开代码文件夹</strong>：在文件管理器打开 <code class="inl">res/program/</code>。</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ============ 页脚 ============ -->
+  <article id="sec-footer" class="content menu-top">
+    <div class="doc-wrap" style="text-align:center; padding-bottom:60px;">
+      <p class="doc-p" style="margin-top:26px;">
+        <a href="index.html">← 回到 CodeBlock Mod 官网</a> ·
+        由 zhangky 用 ❤ 与红石制作 · MIT License
+      </p>
+      <p class="doc-p" style="font-size:12px; opacity:.7;">
+        文档对应 26.2 开发构建。命令功能、钻石镐 30 秒消失 + 幽灵回归 + 成就「你被骗了」、游戏内改名界面均已实现。
+      </p>
+    </div>
+  </article>
+
+  <script>
+  // 平滑滚动 + 当前章节高亮（不依赖模板的 jQuery 插件，避免滑块/作品集脚本报错）
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#nav a[href^="#"]'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function setCurrent(id) {
+      links.forEach(function (a) {
+        var li = a.parentNode;
+        if (a.getAttribute('href') === '#' + id) li.classList.add('current');
+        else li.classList.remove('current');
+      });
+    }
+    links.forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var t = document.querySelector(a.getAttribute('href'));
+        if (!t) return;
+        e.preventDefault();
+        var top = t.getBoundingClientRect().top + window.pageYOffset - 70;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+      });
+    });
+    window.addEventListener('scroll', function () {
+      var y = window.pageYOffset + 120, cur = sections[0];
+      sections.forEach(function (s) { if (s && s.offsetTop <= y) cur = s; });
+      if (cur) setCurrent(cur.id);
+    });
+    if (sections[0]) setCurrent(sections[0].id);
+  })();
+  </script>
+</body>
+</html>
