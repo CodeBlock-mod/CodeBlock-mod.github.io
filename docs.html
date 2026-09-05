@@ -64,8 +64,9 @@
         <li><a href="#sec-state">状态与等待</a></li>
         <li><a href="#sec-msg">消息与音效</a></li>
         <li><a href="#sec-audio">自定义音频</a></li>
-        <li><a href="#sec-files">文件与命名</a></li>
-        <li><a href="index.html">← 回官网</a></li>
+      <li><a href="#sec-files">文件与命名</a></li>
+      <li><a href="#sec-advanced">进阶 API</a></li>
+      <li><a href="index.html">← 回官网</a></li>
       </ul>
     </nav>
   </header>
@@ -312,6 +313,107 @@ ctx.<span class="f">stopAudio</span>(<span class="s">"ding.mp3"</span>);        
     </div>
   </article>
 
+  <!-- ============ 进阶 API ============ -->
+  <article id="sec-advanced" class="content menu-top dark">
+    <div class="doc-wrap">
+      <header class="title one">进阶 API：数组 / 玩家识别 / 命令 / 记分板</header>
+      <div class="spacer"></div>
+      <div class="title two">字符串数组、二维表格、精确"谁按的"、最高权限命令、记分板读写</div>
+
+      <h3 class="api-h">字符串数组（一维）<span class="tag tag--ok">已实现</span></h3>
+      <p class="doc-p">通用的字符串数组，可当名单 / 记分表 / 排队序列。状态跨 tick 持久化，每个方块独立。</p>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>void arrayAdd(String key, String v)</code></td><td>末尾追加（允许重复）。</td></tr>
+          <tr><td><code>void arrayAddOnce(String key, String v)</code></td><td>仅当数组里没有时才加（去重）。</td></tr>
+          <tr><td><code>void arrayRemove(String key, String v)</code></td><td>移除第一个匹配项。</td></tr>
+          <tr><td><code>void arrayClear(String key)</code></td><td>清空数组。</td></tr>
+          <tr><td><code>int arraySize(String key)</code></td><td>元素个数。</td></tr>
+          <tr><td><code>String arrayGet(String key, int i)</code></td><td>取第 i 个（0 起），越界返回 ""。</td></tr>
+          <tr><td><code>int arrayFind(String key, String v)</code></td><td>找位置（0 起），找不到返回 -1。</td></tr>
+          <tr><td><code>String arrayJoin(String key, String sep)</code></td><td>用分隔符拼成字符串。</td></tr>
+          <tr><td><code>void setString(String key, String v)</code> / <code>String getString(String key)</code></td><td>单个字符串状态（持久化）。</td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <strong>旧名兼容：</strong>早期版本叫"名单"，接口里保留 <code class="inl">listXxx</code> 作为 <code class="inl">@Deprecated</code> 别名，老程序（如 <code class="inl">listAdd</code>）仍能编译。
+      </div>
+
+      <h3 class="api-h">二维字符串数组（表格）<span class="tag tag--ok">已实现</span></h3>
+      <p class="doc-p">行 × 列的表格，适合成绩表 / 配置矩阵。编辑器里用 <code class="inl">创建二维数组</code> 积木，直接填「行数」「列数」两个数字，下面自动长出对应的方格（每行标"第 N 行"），改任一数字即重排，不用点齿轮。</p>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>void array2DClear(String key)</code></td><td>清空整张表。</td></tr>
+          <tr><td><code>void array2DSetCols(String key, int cols)</code></td><td>设列数（初始化时）。</td></tr>
+          <tr><td><code>void array2DSet(String key, int r, int c, String v)</code></td><td>写第 r 行第 c 列（0 起），行/列不够自动补空。</td></tr>
+          <tr><td><code>String array2DGet(String key, int r, int c)</code></td><td>读取，越界返回 ""。</td></tr>
+          <tr><td><code>int array2DRows(String key)</code> / <code>int array2DCols(String key)</code></td><td>行数 / 列数。</td></tr>
+          <tr><td><code>int array2DFind(String key, String v)</code></td><td>全表查找，返回所在行（0 起），找不到 -1。</td></tr>
+          <tr><td><code>String array2DRowJoin(String key, int r, String sep)</code></td><td>把某行拼成字符串。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">精确识别"是谁按的按钮"<span class="tag tag--ok">已实现</span></h3>
+      <p class="doc-p">监听玩家<strong>右键交互</strong>（<code class="inl">UseBlockCallback</code>），不靠"谁离得近"猜——多人围在一起时，只有真正伸手按下去的那个人会被记到。</p>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>String whoUsed(int dx, int dy, int dz)</code></td><td>谁最后按过相对本方块 (dx,dy,dz) 处的方块？例：按钮在西面一格 → <code>whoUsed(-1,0,0)</code>。默认只认 20 tick（1 秒）内的操作。</td></tr>
+          <tr><td><code>String whoUsed(int dx, int dy, int dz, int withinTicks)</code></td><td>同上，自定义时间窗；0/负 = 不限时间。</td></tr>
+          <tr><td><code>String whoUsedNearby(double radius)</code></td><td>半径内最近交互过的人（不想算相对坐标时用）。</td></tr>
+          <tr><td><code>String whoUsedNearby(double radius, int withinTicks)</code></td><td>同上，自定义时间窗。</td></tr>
+          <tr><td><code>String nearestPlayer()</code> / <code>nearestPlayer(double r)</code> / <code>int playerCount()</code></td><td>兜底：最近玩家名 / 半径内玩家数。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">命令与条件执行（最高权限）<span class="tag tag--ok">已实现</span></h3>
+      <p class="doc-p">所有命令都在<strong>最高权限（ALL_PERMISSIONS）</strong>下执行——即使服务器关了命令、玩家不是 OP 也照样能跑。<code class="inl">@s</code> 用 <code class="inl">executeCommandAs</code> 时可指向指定玩家。</p>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>void executeCommand(String cmd)</code></td><td>最高权限执行命令（位置=方块中心）。</td></tr>
+          <tr><td><code>void executeCommandAs(String player, String cmd)</code></td><td>以某玩家身份执行，<code class="inl">@s</code> 指向他，仍最高权限。</td></tr>
+          <tr><td><code>int executeCommandResult(String cmd)</code></td><td>执行并拿<strong>结果值</strong>。</td></tr>
+          <tr><td><code>boolean executeCommandTest(String cmd)</code></td><td>等价于 <code class="inl">executeCommandResult(cmd) &gt; 0</code>，专供 <code class="inl">/execute</code> 条件判断。</td></tr>
+          <tr><td><code>int executeCommandResultAs(String player, String cmd)</code></td><td>以玩家身份执行并取结果值。</td></tr>
+        </tbody>
+      </table>
+      <div class="note note--warn">
+        <strong>execute if 不成立 ≠ 返回 0。</strong>Brigadier 的条件不成立会<strong>抛异常</strong>，模组已统一在底层捕获并归一为 <code class="inl">0</code>，你直接判断返回值即可：<code class="inl">0</code>=不成立/失败，<code class="inl">1</code>=成功，其他=命令返回值（如 <code class="inl">data get</code>、<code class="inl">scoreboard players get</code>）。
+      </div>
+
+      <h3 class="api-h">记分板读写<span class="tag tag--ok">已实现</span></h3>
+      <p class="doc-p">配合 <code class="inl">execute store result score</code> 闭环用。底层复用最高权限命令源，<strong>目标不存在时自动创建 dummy 目标</strong>，开箱即用。</p>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>int getScore(String objective, String player)</code></td><td>读某玩家在目标上的分数，查不到返回 0。</td></tr>
+          <tr><td><code>void setScore(String objective, String player, int value)</code></td><td>设分数（目标不存在自动建 dummy 目标）。</td></tr>
+          <tr><td><code>void addScore(String objective, String player, int delta)</code></td><td>增减（负数即减）。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">例：按钮按了 → 记人名 → 加分 → 够分亮红石</h3>
+      <pre class="code"><code><span class="k">public void</span> <span class="f">onTick</span>(CodeContext ctx, <span class="k">long</span> tick) {
+    <span class="c">// 西面按钮：边沿检测，按一次只记一次</span>
+    <span class="k">if</span> (ctx.<span class="f">inputChanged</span>(<span class="s">4</span>) &amp;&amp; ctx.<span class="f">readInput</span>(<span class="s">4</span>) &gt; <span class="s">0</span>) {
+        String p = ctx.<span class="f">whoUsed</span>(<span class="s">-1</span>, <span class="s">0</span>, <span class="s">0</span>);   <span class="c">// 精确识别按西面按钮的人</span>
+        <span class="k">if</span> (!p.isEmpty()) {
+            ctx.<span class="f">arrayAddOnce</span>(<span class="s">"voters"</span>, p);  <span class="c">// 记进名单（去重）</span>
+            ctx.<span class="f">addScore</span>(<span class="s">"vote"</span>, p, <span class="s">1</span>);     <span class="c">// 他的投票数 +1</span>
+            <span class="k">int</span> s = ctx.<span class="f">getScore</span>(<span class="s">"vote"</span>, p);
+            ctx.<span class="f">writeOutput</span>(<span class="s">5</span>, s &gt;= <span class="s">3</span> ? <span class="s">15</span> : <span class="s">0</span>);  <span class="c">// 满 3 票东面亮红石</span>
+        }
+    }
+}</code></pre>
+      <div class="note note--ok">
+        <strong>整套从"按按钮"到"记分板分数驱动红石"的链路已经打通</strong>：whoUsed 精确识别 → 字符串数组记录 → 记分板读写累加 → getScore 判定 → writeOutput 出红石。
+      </div>
+    </div>
+  </article>
+
   <!-- ============ 页脚 ============ -->
   <article id="sec-footer" class="content menu-top">
     <div class="doc-wrap" style="text-align:center; padding-bottom:60px;">
@@ -320,7 +422,7 @@ ctx.<span class="f">stopAudio</span>(<span class="s">"ding.mp3"</span>);        
         由 zhangky 用 ❤ 与红石制作 · MIT License
       </p>
       <p class="doc-p" style="font-size:12px; opacity:.7;">
-        文档对应 26.2 开发构建。命令功能、钻石镐 30 秒消失 + 幽灵回归 + 成就「你被骗了」、游戏内改名界面均已实现。
+        文档对应 26.2 开发构建。命令功能（含最高权限与 execute 条件判断）、字符串/二维数组、精确"谁按的"玩家识别、记分板读写、钻石镐 30 秒消失 + 幽灵回归 + 成就「你被骗了」、游戏内改名界面均已实现。
       </p>
     </div>
   </article>
