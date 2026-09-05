@@ -66,6 +66,7 @@
         <li><a href="#sec-audio">自定义音频</a></li>
       <li><a href="#sec-files">文件与命名</a></li>
       <li><a href="#sec-advanced">进阶 API</a></li>
+      <li><a href="#sec-execute">execute 命令</a></li>
       <li><a href="index.html">← 回官网</a></li>
       </ul>
     </nav>
@@ -316,100 +317,350 @@ ctx.<span class="f">stopAudio</span>(<span class="s">"ding.mp3"</span>);        
   <!-- ============ 进阶 API ============ -->
   <article id="sec-advanced" class="content menu-top dark">
     <div class="doc-wrap">
-      <header class="title one">进阶 API：数组 / 玩家识别 / 命令 / 记分板</header>
+      <header class="title one">进阶 API</header>
       <div class="spacer"></div>
-      <div class="title two">字符串数组、二维表格、精确"谁按的"、最高权限命令、记分板读写</div>
+      <div class="title two">代码 API 与编辑器积木完整参考</div>
+      <p class="doc-p">本页分两部分：<strong>① 代码 API</strong>（直接写 Java 用的方法清单）、<strong>② 编辑器积木</strong>（图形化拖拽对应的积木清单）。两者一一对应。</p>
+
+      <!-- ==================== 第一部分：代码 API ==================== -->
+      <h2 class="api-h" style="color:#4fc3f7;">一、代码 API（Java 方法）</h2>
 
       <h3 class="api-h">字符串数组（一维）<span class="tag tag--ok">已实现</span></h3>
-      <p class="doc-p">通用的字符串数组，可当名单 / 记分表 / 排队序列。状态跨 tick 持久化，每个方块独立。</p>
+      <p class="doc-p"><strong>怎么创建名单？</strong>不用显式创建。直接用 <code class="inl">arrayAdd("名单名", "值")</code> 调用，模组发现这个"名单名"还不存在就自动建一个空数组。每个方块各自独立，跨 tick 持久化（存档退出再进还在）。key 支持中文。</p>
       <table class="api-table">
-        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
         <tbody>
-          <tr><td><code>void arrayAdd(String key, String v)</code></td><td>末尾追加（允许重复）。</td></tr>
-          <tr><td><code>void arrayAddOnce(String key, String v)</code></td><td>仅当数组里没有时才加（去重）。</td></tr>
-          <tr><td><code>void arrayRemove(String key, String v)</code></td><td>移除第一个匹配项。</td></tr>
-          <tr><td><code>void arrayClear(String key)</code></td><td>清空数组。</td></tr>
-          <tr><td><code>int arraySize(String key)</code></td><td>元素个数。</td></tr>
-          <tr><td><code>String arrayGet(String key, int i)</code></td><td>取第 i 个（0 起），越界返回 ""。</td></tr>
-          <tr><td><code>int arrayFind(String key, String v)</code></td><td>找位置（0 起），找不到返回 -1。</td></tr>
-          <tr><td><code>String arrayJoin(String key, String sep)</code></td><td>用分隔符拼成字符串。</td></tr>
-          <tr><td><code>void setString(String key, String v)</code> / <code>String getString(String key)</code></td><td>单个字符串状态（持久化）。</td></tr>
+          <tr><td><code>void arrayAdd(key, v)</code></td><td>往名单末尾加一个值，允许重复。</td></tr>
+          <tr><td><code>void arrayAddOnce(key, v)</code></td><td>只在名单里没有这个值时才加（去重），最常用于"白名单/已领奖名单"。</td></tr>
+          <tr><td><code>void arrayRemove(key, v)</code></td><td>从名单里删掉第一个匹配的值。</td></tr>
+          <tr><td><code>void arrayClear(key)</code></td><td>清空整个名单。</td></tr>
+          <tr><td><code>int arraySize(key)</code></td><td>名单里有几个元素。</td></tr>
+          <tr><td><code>String arrayGet(key, i)</code></td><td>取第 i 个元素（从 0 开始数），越界返回空字符串。</td></tr>
+          <tr><td><code>int arrayFind(key, v)</code></td><td>找这个值在第几位（0 起），找不到返回 -1。<strong>判断"在不在名单里"就用 <code>arrayFind(...) >= 0</code></strong>。</td></tr>
+          <tr><td><code>String arrayJoin(key, sep)</code></td><td>把名单所有元素用分隔符拼成一个字符串，方便 sendMessage 打印。</td></tr>
+          <tr><td><code>void setString(key, v)</code> / <code>String getString(key)</code></td><td>存/取单个字符串状态（不是数组，就是一个 key→一个字符串）。</td></tr>
         </tbody>
       </table>
       <div class="note">
-        <strong>旧名兼容：</strong>早期版本叫"名单"，接口里保留 <code class="inl">listXxx</code> 作为 <code class="inl">@Deprecated</code> 别名，老程序（如 <code class="inl">listAdd</code>）仍能编译。
+        <strong>替代记分板：</strong>判断"某玩家是否属于某组"（白名单/黑名单/已领奖），不要用记分板，直接 <code class="inl">arrayFind("vip", playerName) >= 0</code> 一行搞定，无需建 objective。
       </div>
 
       <h3 class="api-h">二维字符串数组（表格）<span class="tag tag--ok">已实现</span></h3>
-      <p class="doc-p">行 × 列的表格，适合成绩表 / 配置矩阵。编辑器里用 <code class="inl">创建二维数组</code> 积木，直接填「行数」「列数」两个数字，下面自动长出对应的方格（每行标"第 N 行"），改任一数字即重排，不用点齿轮。</p>
+      <p class="doc-p">行 × 列的表格，存成绩表 / 配置矩阵。同样用 key 自动创建。编辑器里「创建二维数组」积木直接填行数和列数，下面自动长方格。</p>
       <table class="api-table">
-        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
         <tbody>
-          <tr><td><code>void array2DClear(String key)</code></td><td>清空整张表。</td></tr>
-          <tr><td><code>void array2DSetCols(String key, int cols)</code></td><td>设列数（初始化时）。</td></tr>
-          <tr><td><code>void array2DSet(String key, int r, int c, String v)</code></td><td>写第 r 行第 c 列（0 起），行/列不够自动补空。</td></tr>
-          <tr><td><code>String array2DGet(String key, int r, int c)</code></td><td>读取，越界返回 ""。</td></tr>
-          <tr><td><code>int array2DRows(String key)</code> / <code>int array2DCols(String key)</code></td><td>行数 / 列数。</td></tr>
-          <tr><td><code>int array2DFind(String key, String v)</code></td><td>全表查找，返回所在行（0 起），找不到 -1。</td></tr>
-          <tr><td><code>String array2DRowJoin(String key, int r, String sep)</code></td><td>把某行拼成字符串。</td></tr>
+          <tr><td><code>void array2DSet(key, r, c, v)</code></td><td>写第 r 行第 c 列（都从 0 起），行/列不够自动补空行。</td></tr>
+          <tr><td><code>String array2DGet(key, r, c)</code></td><td>读第 r 行第 c 列，越界返回空字符串。</td></tr>
+          <tr><td><code>int array2DRows(key)</code> / <code>int array2DCols(key)</code></td><td>表格有几行 / 几列。</td></tr>
+          <tr><td><code>int array2DFind(key, v)</code></td><td>全表找这个值在第几行，找不到 -1。</td></tr>
+          <tr><td><code>String array2DRowJoin(key, r, sep)</code></td><td>把某一行用分隔符拼成字符串。</td></tr>
+          <tr><td><code>void array2DClear(key)</code></td><td>清空整张表。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">红石输入/输出<span class="tag tag--ok">已实现</span></h3>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>int readInput(channel)</code></td><td>读某一面接收到的红石强度（0-15）。channel：0=下 1=上 2=北 3=南 4=西 5=东。</td></tr>
+          <tr><td><code>int readInputMax()</code></td><td>6 个面里最大的红石强度。</td></tr>
+          <tr><td><code>void writeOutput(channel, v)</code></td><td>往某一面输出红石强度（自动 clamp 0-15）。</td></tr>
+          <tr><td><code>void writeOutputAll(v)</code></td><td>6 个面同时输出相同强度。</td></tr>
+          <tr><td><code>boolean inputChanged(channel)</code></td><td>某一面的红石值跟上一次比有没有变。<strong>按钮去抖用这个</strong>——按下瞬间变一次返回 true，按住不放持续返回 false。</td></tr>
+          <tr><td><code>boolean valueChanged(key, value)</code></td><td>通用边沿检测：跟上次同 key 记录的值比，变了返回 true。不限红石，任意整数都行（比如变量、计算结果）。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">状态 / 计时<span class="tag tag--ok">已实现</span></h3>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>int getStateInt(key)</code></td><td>读一个跨 tick 持久化的整数（计数器/标志位），不存在返回 0。</td></tr>
+          <tr><td><code>void setState(key, v)</code></td><td>存一个跨 tick 持久化的整数。</td></tr>
+          <tr><td><code>void sleepTicks(n)</code></td><td>等 n 个游戏刻（1 刻=50ms）。<strong>while 循环里必须加这个，否则卡死游戏</strong>。</td></tr>
+          <tr><td><code>void sleep(ms)</code></td><td>等指定毫秒数（真阻塞）。</td></tr>
         </tbody>
       </table>
 
       <h3 class="api-h">精确识别"是谁按的按钮"<span class="tag tag--ok">已实现</span></h3>
-      <p class="doc-p">监听玩家<strong>右键交互</strong>（<code class="inl">UseBlockCallback</code>），不靠"谁离得近"猜——多人围在一起时，只有真正伸手按下去的那个人会被记到。</p>
+      <p class="doc-p">监听玩家右键交互，不靠"谁离得近"猜——多人围在一起时，只有真正按下去的人会被记到。</p>
       <table class="api-table">
-        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
         <tbody>
-          <tr><td><code>String whoUsed(int dx, int dy, int dz)</code></td><td>谁最后按过相对本方块 (dx,dy,dz) 处的方块？例：按钮在西面一格 → <code>whoUsed(-1,0,0)</code>。默认只认 20 tick（1 秒）内的操作。</td></tr>
-          <tr><td><code>String whoUsed(int dx, int dy, int dz, int withinTicks)</code></td><td>同上，自定义时间窗；0/负 = 不限时间。</td></tr>
-          <tr><td><code>String whoUsedNearby(double radius)</code></td><td>半径内最近交互过的人（不想算相对坐标时用）。</td></tr>
-          <tr><td><code>String whoUsedNearby(double radius, int withinTicks)</code></td><td>同上，自定义时间窗。</td></tr>
-          <tr><td><code>String nearestPlayer()</code> / <code>nearestPlayer(double r)</code> / <code>int playerCount()</code></td><td>兜底：最近玩家名 / 半径内玩家数。</td></tr>
+          <tr><td><code>String whoUsed(dx, dy, dz)</code></td><td>谁最后按过相对本方块 (dx,dy,dz) 处的方块。按钮在西面一格 → <code>whoUsed(-1,0,0)</code>。默认只认 1 秒内的操作。</td></tr>
+          <tr><td><code>String whoUsed(dx, dy, dz, withinTicks)</code></td><td>同上，自定义时间窗（tick 数）；0 或负数=不限时间。</td></tr>
+          <tr><td><code>String whoUsedNearby(radius)</code></td><td>不想算坐标时用：半径内最近交互过的人。</td></tr>
+          <tr><td><code>String nearestPlayer()</code> / <code>nearestPlayer(r)</code></td><td>兜底：最近的玩家名。</td></tr>
+          <tr><td><code>int playerCount()</code></td><td>当前在线玩家数。</td></tr>
         </tbody>
       </table>
 
-      <h3 class="api-h">命令与条件执行（最高权限）<span class="tag tag--ok">已实现</span></h3>
-      <p class="doc-p">所有命令都在<strong>最高权限（ALL_PERMISSIONS）</strong>下执行——即使服务器关了命令、玩家不是 OP 也照样能跑。<code class="inl">@s</code> 用 <code class="inl">executeCommandAs</code> 时可指向指定玩家。</p>
+      <h3 class="api-h">命令执行（最高权限）<span class="tag tag--ok">已实现</span></h3>
+      <p class="doc-p">所有命令都在<strong>最高权限</strong>下跑——服务器关了命令、玩家不是 OP 也能执行。位置默认在方块中心。</p>
       <table class="api-table">
-        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
         <tbody>
-          <tr><td><code>void executeCommand(String cmd)</code></td><td>最高权限执行命令（位置=方块中心）。</td></tr>
-          <tr><td><code>void executeCommandAs(String player, String cmd)</code></td><td>以某玩家身份执行，<code class="inl">@s</code> 指向他，仍最高权限。</td></tr>
-          <tr><td><code>int executeCommandResult(String cmd)</code></td><td>执行并拿<strong>结果值</strong>。</td></tr>
-          <tr><td><code>boolean executeCommandTest(String cmd)</code></td><td>等价于 <code class="inl">executeCommandResult(cmd) &gt; 0</code>，专供 <code class="inl">/execute</code> 条件判断。</td></tr>
-          <tr><td><code>int executeCommandResultAs(String player, String cmd)</code></td><td>以玩家身份执行并取结果值。</td></tr>
+          <tr><td><code>void executeCommand(cmd)</code></td><td>执行一条命令。<code>/execute</code> 的各种子命令（if/as/at/store 等）直接写在 cmd 字符串里即可，无需专门 API。</td></tr>
+          <tr><td><code>void executeCommandAs(player, cmd)</code></td><td>以指定玩家身份执行，命令里的 <code>@s</code> 指向他，仍最高权限。</td></tr>
+          <tr><td><code>int executeCommandResult(cmd)</code></td><td>执行并拿到返回值：0=失败/条件不成立，1=成功，其他=命令本身的返回值（如 <code>/list</code> 人数、<code>data get</code> 取到的数）。</td></tr>
+          <tr><td><code>boolean executeCommandTest(cmd)</code></td><td>等价于 <code>executeCommandResult(cmd) > 0</code>，专门给 <code>/execute if</code> 条件判断用，放进 if 更顺手。</td></tr>
+          <tr><td><code>int executeCommandResultAs(player, cmd)</code></td><td>以玩家身份执行并取返回值。</td></tr>
         </tbody>
       </table>
       <div class="note note--warn">
-        <strong>execute if 不成立 ≠ 返回 0。</strong>Brigadier 的条件不成立会<strong>抛异常</strong>，模组已统一在底层捕获并归一为 <code class="inl">0</code>，你直接判断返回值即可：<code class="inl">0</code>=不成立/失败，<code class="inl">1</code>=成功，其他=命令返回值（如 <code class="inl">data get</code>、<code class="inl">scoreboard players get</code>）。
+        <strong>/execute if 不成立 ≠ 返回 0。</strong>MC 底层条件不成立会抛异常，模组已统一捕获并归一为 0，你直接判断返回值就行，不用 try-catch。
       </div>
 
       <h3 class="api-h">记分板读写<span class="tag tag--ok">已实现</span></h3>
-      <p class="doc-p">配合 <code class="inl">execute store result score</code> 闭环用。底层复用最高权限命令源，<strong>目标不存在时自动创建 dummy 目标</strong>，开箱即用。</p>
+      <p class="doc-p">需要存数值（如金币数、击杀数）时用。目标不存在时自动创建 dummy 目标，开箱即用。<strong>纯判断"在不在组里"用字符串数组更简单，不必用记分板。</strong></p>
       <table class="api-table">
-        <thead><tr><th style="width:46%">方法</th><th>说明</th></tr></thead>
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
         <tbody>
-          <tr><td><code>int getScore(String objective, String player)</code></td><td>读某玩家在目标上的分数，查不到返回 0。</td></tr>
-          <tr><td><code>void setScore(String objective, String player, int value)</code></td><td>设分数（目标不存在自动建 dummy 目标）。</td></tr>
-          <tr><td><code>void addScore(String objective, String player, int delta)</code></td><td>增减（负数即减）。</td></tr>
+          <tr><td><code>int getScore(objective, player)</code></td><td>读某玩家在某记分板目标上的分数，查不到返回 0。</td></tr>
+          <tr><td><code>void setScore(objective, player, v)</code></td><td>直接设分数。</td></tr>
+          <tr><td><code>void addScore(objective, player, delta)</code></td><td>加/减分数（负数即减）。</td></tr>
         </tbody>
       </table>
 
-      <h3 class="api-h">例：按钮按了 → 记人名 → 加分 → 够分亮红石</h3>
-      <pre class="code"><code><span class="k">public void</span> <span class="f">onTick</span>(CodeContext ctx, <span class="k">long</span> tick) {
-    <span class="c">// 西面按钮：边沿检测，按一次只记一次</span>
-    <span class="k">if</span> (ctx.<span class="f">inputChanged</span>(<span class="s">4</span>) &amp;&amp; ctx.<span class="f">readInput</span>(<span class="s">4</span>) &gt; <span class="s">0</span>) {
-        String p = ctx.<span class="f">whoUsed</span>(<span class="s">-1</span>, <span class="s">0</span>, <span class="s">0</span>);   <span class="c">// 精确识别按西面按钮的人</span>
-        <span class="k">if</span> (!p.isEmpty()) {
-            ctx.<span class="f">arrayAddOnce</span>(<span class="s">"voters"</span>, p);  <span class="c">// 记进名单（去重）</span>
-            ctx.<span class="f">addScore</span>(<span class="s">"vote"</span>, p, <span class="s">1</span>);     <span class="c">// 他的投票数 +1</span>
-            <span class="k">int</span> s = ctx.<span class="f">getScore</span>(<span class="s">"vote"</span>, p);
-            ctx.<span class="f">writeOutput</span>(<span class="s">5</span>, s &gt;= <span class="s">3</span> ? <span class="s">15</span> : <span class="s">0</span>);  <span class="c">// 满 3 票东面亮红石</span>
+      <h3 class="api-h">聊天 / 音效 / 音频<span class="tag tag--ok">已实现</span></h3>
+      <table class="api-table">
+        <thead><tr><th style="width:46%">方法</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>void sendMessage(text)</code></td><td>聊天框发文字（方圆 64 格可见），支持 § 颜色代码。</td></tr>
+          <tr><td><code>void sendActionBar(text)</code></td><td>物品栏上方显示短文字（约 3 秒消失）。</td></tr>
+          <tr><td><code>void sendTitle(text)</code></td><td>屏幕中央大标题。</td></tr>
+          <tr><td><code>void sendClickable(text, url)</code></td><td>可点击聊天消息（url 以 http 开头=开链接，否则=执行命令）。</td></tr>
+          <tr><td><code>void playSound(soundId)</code></td><td>播放原版音效，如 <code>block.note_block.harp</code>、<code>entity.player.levelup</code>。</td></tr>
+          <tr><td><code>void playAudio(filename, volume)</code></td><td>播放存档 <code>res/media/</code> 目录下的自定义音频文件（mp3/wav/ogg）。</td></tr>
+          <tr><td><code>void stopAudio()</code> / <code>stopAudio(filename)</code></td><td>停止所有/指定自定义音频。</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ==================== 第二部分：编辑器积木 ==================== -->
+      <h2 class="api-h" style="color:#4fc3f7;">二、编辑器积木（图形化）</h2>
+      <p class="doc-p">积木按工具箱分类排列，每个积木的 Java 生成代码在括号里标注。</p>
+
+      <h3 class="api-h">[I/O] 输入/输出</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">积木</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>读取某面强度</td><td><code>ctx.readInput(面)</code>，0-15。</td></tr>
+          <tr><td>读取所有面最大值</td><td><code>ctx.readInputMax()</code>。</td></tr>
+          <tr><td>输入变化?</td><td><code>ctx.inputChanged(面)</code>，边沿检测，按钮去抖。</td></tr>
+          <tr><td>值变化? 键 □ 当前值 □</td><td><code>ctx.valueChanged(key, value)</code>，通用边沿检测（任意整数）。</td></tr>
+          <tr><td>输出到 □ 强度 □</td><td><code>ctx.writeOutput(面, 值)</code>。</td></tr>
+          <tr><td>向所有面输出 □</td><td><code>ctx.writeOutputAll(值)</code>。</td></tr>
+          <tr><td>调试: 打印所有输入</td><td>聊天框打印 6 个面的红石强度，排查接线用。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">[Exec] 执行/判断命令</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">积木</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>执行命令 □</td><td><code>ctx.executeCommand(cmd)</code>，原始执行任意命令。</td></tr>
+          <tr><td>以玩家 □ 身份执行命令 □</td><td><code>ctx.executeCommandAs(玩家, cmd)</code>，@s 指向该玩家。</td></tr>
+          <tr><td>命令成立? □</td><td><code>ctx.executeCommandTest(cmd)</code>，execute 条件判断，返回真/假。</td></tr>
+          <tr><td>执行命令 □ 取结果</td><td><code>ctx.executeCommandResult(cmd)</code>，拿返回值（数字）。</td></tr>
+          <tr><td>以玩家 □ 执行命令 □ 取结果</td><td><code>ctx.executeCommandResultAs(玩家, cmd)</code>。</td></tr>
+          <tr><td>execute 若方块 相对 x y z 是 □ 则运行 □</td><td><code>execute if block ~x ~y ~z 方块 run cmd</code>。</td></tr>
+          <tr><td>execute 若存在实体 □ 则运行 □</td><td><code>execute if entity 选择器 run cmd</code>。</td></tr>
+          <tr><td>execute 若不存在实体 □ 则运行 □</td><td><code>execute unless entity 选择器 run cmd</code>。</td></tr>
+          <tr><td>execute 若实体 □ 槽位 □ 含物品 □ 则运行 □</td><td><code>execute if items entity 选择器 槽位 物品 run cmd</code>。</td></tr>
+          <tr><td>execute 若谓词 □ 成立 则运行 □</td><td><code>execute if predicate 谓词 run cmd</code>。</td></tr>
+          <tr><td>execute 以 □ 身份 在其位置运行 □</td><td><code>execute as 选择器 at @s run cmd</code>，as+at 合体。</td></tr>
+          <tr><td>execute 以 □ 身份运行 □</td><td><code>execute as 选择器 run cmd</code>，只改执行者。</td></tr>
+          <tr><td>execute 在 □ 位置运行 □</td><td><code>execute at 选择器 run cmd</code>，只改位置。</td></tr>
+          <tr><td>execute 在坐标 x y z 运行 □</td><td><code>execute positioned x y z run cmd</code>。</td></tr>
+          <tr><td>execute 存结果到 玩家 □ 记分板 □ 运行 □</td><td><code>execute store result score 玩家 目标 run cmd</code>。</td></tr>
+          <tr><td>execute 若 玩家 □ 记分板 □ 比较符 □ 值 □ 则运行 □</td><td><code>execute if score 玩家 目标 比较符 值 run cmd</code>，记分板条件。</td></tr>
+          <tr><td>execute 若玩家 □ 在名单 □ 里 则运行 □</td><td>字符串数组做白名单判断（替代记分板）。</td></tr>
+          <tr><td>execute 若名单 □ 包含 □ 则运行 □</td><td>通用版，值不限玩家名。</td></tr>
+          <tr><td>execute 若名单 □ 不包含 □ 则运行 □</td><td>反向判断（黑名单）。</td></tr>
+          <tr><td>对名单 □ 中每个元素存入变量 □ 执行 □</td><td>遍历名单逐个处理，替代 <code>@a[scores=...]</code> 批量执行。</td></tr>
+          <tr><td>名单 □ 包含 □ ?</td><td><code>ctx.arrayFind(key,值) >= 0</code>，返回真/假，直接接 if。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">[Array1] 字符串数组</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">积木</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>往名单 □ 追加 □</td><td><code>ctx.arrayAdd(key, 值)</code>，允许重复。</td></tr>
+          <tr><td>往名单 □ 追加（去重）□</td><td><code>ctx.arrayAddOnce(key, 值)</code>，已存在就不加。</td></tr>
+          <tr><td>从名单 □ 删除 □</td><td><code>ctx.arrayRemove(key, 值)</code>。</td></tr>
+          <tr><td>清空名单 □</td><td><code>ctx.arrayClear(key)</code>。</td></tr>
+          <tr><td>名单 □ 长度</td><td><code>ctx.arraySize(key)</code>，元素个数。</td></tr>
+          <tr><td>名单 □ 取第 □ 个</td><td><code>ctx.arrayGet(key, 下标)</code>，0 起。</td></tr>
+          <tr><td>名单 □ 查找 □</td><td><code>ctx.arrayFind(key, 值)</code>，返回位置，找不到 -1。</td></tr>
+          <tr><td>名单 □ 用 □ 拼接</td><td><code>ctx.arrayJoin(key, 分隔符)</code>。</td></tr>
+          <tr><td>设置字符串 □ = □</td><td><code>ctx.setString(key, 值)</code>，存单个字符串。</td></tr>
+          <tr><td>读取字符串 □</td><td><code>ctx.getString(key)</code>。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">[State] 状态/计时 · [Player] 玩家 · [CMD] 命令 · [Chat] 聊天 · [Audio] 音频</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">积木</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2" style="opacity:.7;font-weight:bold;">[State] 状态/计时</td></tr>
+          <tr><td>读状态 □</td><td><code>ctx.getStateInt(key)</code>。</td></tr>
+          <tr><td>写状态 □ = □</td><td><code>ctx.setState(key, 值)</code>。</td></tr>
+          <tr><td>等待 □ 刻 / 秒 / 毫秒</td><td><code>ctx.sleepTicks(n)</code> / <code>sleep(ms)</code>。<strong>while 循环必须加</strong>。</td></tr>
+          <tr><td>当前 tick 数</td><td>程序启动后经过的游戏刻数。</td></tr>
+          <tr><td colspan="2" style="opacity:.7;font-weight:bold;">[Player] 玩家</td></tr>
+          <tr><td>谁按过 相对 x y z 的方块</td><td><code>ctx.whoUsed(dx,dy,dz)</code>，精确识别。</td></tr>
+          <tr><td>谁按过 半径 □ 内的方块</td><td><code>ctx.whoUsedNearby(r)</code>。</td></tr>
+          <tr><td>最近玩家 / 最近玩家(半径)</td><td><code>ctx.nearestPlayer()</code>。</td></tr>
+          <tr><td>在线玩家数</td><td><code>ctx.playerCount()</code>。</td></tr>
+          <tr><td colspan="2" style="opacity:.7;font-weight:bold;">[CMD] 普通命令积木（直接生成命令字符串）</td></tr>
+          <tr><td>给予 / 传送 / 说 / 召唤 / 效果 / 放方块 / 填充 / 击杀 / 游戏模式 / 时间 / 天气 / 标题</td><td>图形化填参数 → 自动拼命令 → <code>ctx.executeCommand(...)</code>。</td></tr>
+          <tr><td>原始命令 □</td><td>直接写完整命令文本。</td></tr>
+          <tr><td>读分数 / 设分数 / 改分数</td><td><code>ctx.getScore/setScore/addScore</code>。</td></tr>
+          <tr><td colspan="2" style="opacity:.7;font-weight:bold;">[Chat] 聊天</td></tr>
+          <tr><td>发消息 / 可点击消息 / 音效 / ActionBar / Title</td><td>对应 <code>sendMessage</code> / <code>sendClickable</code> / <code>playSound</code> / <code>sendActionBar</code> / <code>sendTitle</code>。</td></tr>
+          <tr><td colspan="2" style="opacity:.7;font-weight:bold;">[Audio] 自定义音频</td></tr>
+          <tr><td>播放音频 □ 音量 □</td><td><code>ctx.playAudio(文件名, 音量)</code>，文件放存档 <code>res/media/</code>。</td></tr>
+          <tr><td>停止所有音频 / 停止 □</td><td><code>ctx.stopAudio()</code> / <code>stopAudio(文件名)</code>。</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">例：按钮按了 → 记人名进名单 → 判断 → 执行命令</h3>
+      <pre class="code"><code><span class="c">// 西面按钮按下时</span>
+<span class="k">if</span> (ctx.<span class="f">inputChanged</span>(<span class="s">4</span>) &amp;&amp; ctx.<span class="f">readInput</span>(<span class="s">4</span>) &gt; <span class="s">0</span>) {
+    String p = ctx.<span class="f">whoUsed</span>(<span class="s">-1</span>, <span class="s">0</span>, <span class="s">0</span>);          <span class="c">// 是谁按的</span>
+    <span class="k">if</span> (!p.isEmpty()) {
+        <span class="k">if</span> (ctx.<span class="f">arrayFind</span>(<span class="s">"vip"</span>, p) &gt;= <span class="s">0</span>) {              <span class="c">// 在 VIP 名单里？</span>
+            ctx.<span class="f">executeCommand</span>(<span class="s">"give "</span> + p + <span class="s">" diamond 1"</span>);  <span class="c">// 发钻石</span>
+        } <span class="k">else</span> {
+            ctx.<span class="f">arrayAddOnce</span>(<span class="s">"vip"</span>, p);                   <span class="c">// 不在就加入名单</span>
         }
     }
 }</code></pre>
       <div class="note note--ok">
-        <strong>整套从"按按钮"到"记分板分数驱动红石"的链路已经打通</strong>：whoUsed 精确识别 → 字符串数组记录 → 记分板读写累加 → getScore 判定 → writeOutput 出红石。
+        <strong>典型链路</strong>：inputChanged 边沿检测 → whoUsed 精确识别 → arrayFind 名单判断 → executeCommand 执行命令。全程无需记分板。
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ execute 命令详解 ============ -->
+  <article id="sec-execute" class="content menu-top dark">
+    <div class="doc-wrap">
+      <header class="title one">execute 命令详解</header>
+      <div class="spacer"></div>
+      <div class="title two">/execute 子命令语法、用途与示例</div>
+      <p class="doc-p"><code class="inl">/execute</code> 是 MC 最强大的命令——改执行者、改位置、加条件、存结果，一条命令全搞定。代码方块里所有 execute 积木最终都是拼出 <code class="inl">execute ... run ...</code> 字符串交给 <code class="inl">ctx.executeCommand()</code> 执行。</p>
+
+      <h3 class="api-h">基本结构</h3>
+      <pre class="code"><code>execute [修饰子命令] [条件子命令] [store子命令] run &lt;要执行的命令&gt;</code></pre>
+      <p class="doc-p">子命令从左到右依次生效，<code class="inl">run</code> 只能放最后。除 <code class="inl">run</code> 外，其他子命令可多个串联、可重复。</p>
+
+      <h3 class="api-h">一、修饰子命令（改「在哪跑、以谁的身份跑」）</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">子命令</th><th>用途 + 示例</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>as &lt;选择器&gt;</code></td>
+            <td>改<strong>执行者</strong>（命令里的 <code>@s</code> 指向它），不改位置。<br>例：<code>execute as @a run say 你好</code> → 每个玩家都说"你好"。</td>
+          </tr>
+          <tr>
+            <td><code>at &lt;选择器&gt;</code></td>
+            <td>改<strong>执行位置/朝向/维度</strong>，不改执行者。<br>例：<code>execute at @p run setblock ~ ~ ~ stone</code> → 在最近玩家脚下放石头。</td>
+          </tr>
+          <tr>
+            <td><code>as &lt;选择器&gt; at @s</code></td>
+            <td>执行者+位置一起改（最常用）。<br>例：<code>execute as @a at @s run particle flame ~ ~1 ~</code> → 每个玩家头上冒火焰粒子。</td>
+          </tr>
+          <tr>
+            <td><code>positioned &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+            <td>指定绝对/相对坐标。<code>~</code> = 相对当前位置，<code>^</code> = 相对朝向。<br>例：<code>execute positioned ~ ~1 ~ run setblock ~ ~ ~ diamond_block</code> → 头顶放钻石块。</td>
+          </tr>
+          <tr>
+            <td><code>in &lt;维度&gt;</code></td>
+            <td>切换执行维度：<code>minecraft:overworld</code> / <code>the_nether</code> / <code>the_end</code>。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="api-h">二、条件子命令（if 成立 / unless 不成立才继续）</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">子命令</th><th>用途 + 示例</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>if/unless entity &lt;选择器&gt;</code></td>
+            <td>实体存在/不存在。<br>例：<code>execute if entity @e[type=zombie,r=10] run say 附近有僵尸！</code></td>
+          </tr>
+          <tr>
+            <td><code>if/unless block &lt;x y z&gt; &lt;方块&gt;</code></td>
+            <td>某位置是不是指定方块。<br>例：<code>execute if block ~ ~-1 ~ minecraft:gold_block run say 脚下是金块！</code></td>
+          </tr>
+          <tr>
+            <td><code>if/unless blocks &lt;x1 y1 z1&gt; &lt;x2 y2 z2&gt; &lt;x y z&gt; all|masked</code></td>
+            <td>两个区域方块是否一致。<code>all</code>=全比，<code>masked</code>=只比非空气。</td>
+          </tr>
+          <tr>
+            <td><code>if/unless items entity &lt;选择器&gt; &lt;槽位&gt; &lt;物品&gt;</code></td>
+            <td>实体某槽位是否有某物品。槽位如 <code>weapon.mainhand</code>、<code>armor.head</code>、<code>hotbar.0</code>。<br>例：<code>execute if items entity @s weapon.mainhand minecraft:diamond run say 手持钻石！</code></td>
+          </tr>
+          <tr>
+            <td><code>if/unless predicate &lt;谓词&gt;</code></td>
+            <td>数据包谓词条件（高级，用于复杂判定）。</td>
+          </tr>
+          <tr>
+            <td><code>if/unless score &lt;目标&gt; &lt;记分项&gt; &lt;操作符&gt; &lt;值&gt;</code></td>
+            <td>记分板分数比较。操作符：<code>=</code> <code>></code> <code>>=</code> <code><</code> <code><=</code>，或 <code>matches 范围</code>。<br>例：<code>execute if score @s money matches 100.. run say 我有100块以上！</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note note--warn">
+        <strong>纯判断"玩家在不在名单里"不要用 score。</strong>用字符串数组的 <code class="inl">arrayFind(key, 玩家名) >= 0</code> 更简单，无需建记分板目标。
+      </div>
+
+      <h3 class="api-h">三、存储子命令（把命令结果存下来）</h3>
+      <table class="api-table">
+        <thead><tr><th style="width:30%">子命令</th><th>用途 + 示例</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>store result score &lt;玩家&gt; &lt;记分项&gt; run &lt;命令&gt;</code></td>
+            <td>把 run 后命令的<strong>返回值</strong>存进记分板。<br>例：<code>execute store result score @s online run list</code> → 把在线人数存进 @s 的 online 分数。</td>
+          </tr>
+          <tr>
+            <td><code>store success score &lt;玩家&gt; &lt;记分项&gt;</code></td>
+            <td>存命令是否成功（0/1）。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <strong>返回值语义：</strong>0 = 失败/条件不成立，1 = 成功，其他 = 命令本身返回的数。
+        在代码方块里可以用 <code class="inl">ctx.executeCommandResult("execute ... run ...")</code> 直接拿到这个返回值，不用 store 到记分板。
+      </div>
+
+      <h3 class="api-h">四、常用组合示例</h3>
+      <pre class="code"><code><span class="c">// 1. 让所有玩家传送到代码方块位置</span>
+ctx.<span class="f">executeCommand</span>(<span class="s">"execute as @a at @s run tp ~ ~ ~"</span>);
+
+<span class="c">// 2. 头顶是钻石块就给最近玩家发钻石</span>
+<span class="k">if</span> (ctx.<span class="f">executeCommandTest</span>(<span class="s">"execute if block ~ ~1 ~ minecraft:diamond_block"</span>)) {
+    ctx.<span class="f">executeCommand</span>(<span class="s">"give @p diamond 1"</span>);
+}
+
+<span class="c">// 3. 统计半径 5 格内的僵尸数量，存进记分板</span>
+<span class="k">int</span> zombieCount = ctx.<span class="f">executeCommandResult</span>(
+    <span class="s">"execute if entity @e[type=zombie,distance=..5]"</span>);
+ctx.<span class="f">sendMessage</span>(<span class="s">"附近僵尸数: "</span> + zombieCount);
+
+<span class="c">// 4. 对 VIP 名单里的每个玩家发奖励（用字符串数组，不用记分板）</span>
+<span class="k">for</span> (<span class="k">int</span> i = <span class="s">0</span>; i < ctx.<span class="f">arraySize</span>(<span class="s">"vip"</span>); i++) {
+    String p = ctx.<span class="f">arrayGet</span>(<span class="s">"vip"</span>, i);
+    ctx.<span class="f">executeCommand</span>(<span class="s">"give "</span> + p + <span class="s">" diamond 1"</span>);
+}
+
+<span class="c">// 5. 手持钻石剑才执行后续命令</span>
+ctx.<span class="f">executeCommand</span>(<span class="s">"execute if items entity @s weapon.mainhand minecraft:diamond_sword run effect give @s strength 10 1"</span>);</code></pre>
+
+      <div class="note note--ok">
+        <strong>在编辑器里：</strong>以上都有对应积木，直接在 <code class="inl">[Exec] 执行/判断命令</code> 分类里拖，不用手敲命令字符串。带返回值的用「命令成立?」「取结果」积木。
       </div>
     </div>
   </article>
